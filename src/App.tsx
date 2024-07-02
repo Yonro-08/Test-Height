@@ -16,6 +16,9 @@ function App() {
 				onFocus={() => {
 					setHeight(window.innerHeight);
 				}}
+				onChange={() => {
+					setHeight(window.innerHeight);
+				}}
 			/>
 		</div>
 	);
