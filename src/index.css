@@ -15,4 +15,9 @@ body {
 	height: 100vh;
 	background: gray;
 	overflow: hidden;
+	touch-action: none;
+}
+
+input {
+	-webkit-overflow-scrolling: touch;
 }
