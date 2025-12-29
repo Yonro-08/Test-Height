@@ -90,7 +90,7 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 					};
 
 					adjustFixedPos = () => {
-						if (!fixedElement) return;
+						if (!fixedElement || isKeyboardOpenRef.current) return;
 
 						const fixedElementHeight = fixedElement.offsetHeight;
 						const docHeight = getDocHeight();
