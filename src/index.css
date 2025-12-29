@@ -1,3 +1,28 @@
+@font-face {
+	font-family: 'PP Object Sans';
+	src: url('/fonts/PPObjectSansFont/PPObjectSans-Regular.ttf')
+		format('truetype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'PP Object Sans';
+	src: url('/fonts/PPObjectSansFont/PPObjectSans-Medium.ttf') format('truetype');
+	font-weight: 500;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'PP Object Sans';
+	src: url('/fonts/PPObjectSansFont/PPObjectSans-Bold.ttf') format('truetype');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
 * {
 	box-sizing: border-box;
 	margin: 0;
@@ -11,6 +36,7 @@ html {
 body {
 	position: relative;
 	color: #141b28;
+	font-family: 'PP Object Sans', sans-serif;
 	font-weight: 500;
 	width: 100vw;
 	height: 100vh;
