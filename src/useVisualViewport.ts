@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, RefObject } from 'react';
 
 const KEYBOARD_THRESHOLD = 120;
 
 interface UseVisualViewportOptions {
-	fixedElementSelector?: string;
+	fixedElementRef?: RefObject<HTMLElement>;
 }
 
 export default function useVisualViewport(options?: UseVisualViewportOptions) {
@@ -42,92 +42,92 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 		let adjustFixedPos: (() => void) | null = null;
 		let handleViewportResizeForPadding: (() => void) | null = null;
 
-		// Функция для обновления padding-bottom элемента (не устанавливает если клавиатура открыта)
+		// Функция для обновления padding-bottom элемента
 		const updateElementPadding = () => {
-			if (isKeyboardOpenRef.current) return;
-
 			const element = fixedElementRef.current;
 			if (!element) return;
 
+			// При закрытой клавиатуре (isKeyboardOpen = false) paddingBottom = 0
+			if (!isKeyboardOpenRef.current) {
+				element.style.paddingBottom = '0px';
+				return;
+			}
+
+			// При открытой клавиатуре устанавливаем высоту элемента
 			const fixedElementHeight = element.offsetHeight || 0;
 			element.style.paddingBottom = `${fixedElementHeight}px`;
 		};
 
 		// Инициализация работы с фиксированным элементом
-		if (options?.fixedElementSelector) {
-			fixedElement = document.querySelector(
-				options.fixedElementSelector
-			) as HTMLElement;
+		if (options?.fixedElementRef?.current) {
+			fixedElement = options.fixedElementRef.current;
+			fixedElementRef.current = fixedElement;
 
-			if (fixedElement) {
-				fixedElementRef.current = fixedElement;
+			// Сохраняем оригинальные стили элемента
+			originalElementPaddingRef.current =
+				fixedElement.style.paddingBottom || '';
 
+			// Устанавливаем начальный padding-bottom
+			updateElementPadding();
+
+			// Обработка для iOS
+			const isIOS = /iPhone|iPad|iPod/.test(window.navigator.userAgent);
+
+			if (isIOS) {
 				// Сохраняем оригинальные стили элемента
-				originalElementPaddingRef.current =
-					fixedElement.style.paddingBottom || '';
+				originalElementStylesRef.current = {
+					position: fixedElement.style.position || '',
+					bottom: fixedElement.style.bottom || '',
+					top: fixedElement.style.top || '',
+				};
 
-				// Устанавливаем начальный padding-bottom
-				updateElementPadding();
+				// Переключаем на absolute позиционирование
+				fixedElement.style.position = 'absolute';
+				fixedElement.style.bottom = 'auto';
 
-				// Обработка для iOS
-				const isIOS = /iPhone|iPad|iPod/.test(window.navigator.userAgent);
+				const getDocHeight = () => {
+					const fixedElementHeight = fixedElement?.offsetHeight || 0;
+					return document.documentElement.scrollHeight + fixedElementHeight;
+				};
 
-				if (isIOS) {
-					// Сохраняем оригинальные стили элемента
-					originalElementStylesRef.current = {
-						position: fixedElement.style.position || '',
-						bottom: fixedElement.style.bottom || '',
-						top: fixedElement.style.top || '',
-					};
+				adjustFixedPos = () => {
+					if (!fixedElement || isKeyboardOpenRef.current) return;
 
-					// Переключаем на absolute позиционирование
-					fixedElement.style.position = 'absolute';
-					fixedElement.style.bottom = 'auto';
+					const fixedElementHeight = fixedElement.offsetHeight;
+					const docHeight = getDocHeight();
 
-					const getDocHeight = () => {
-						const fixedElementHeight = fixedElement?.offsetHeight || 0;
-						return document.documentElement.scrollHeight + fixedElementHeight;
-					};
+					let fixedElementBottom =
+						document.documentElement.scrollTop + viewport.height;
 
-					adjustFixedPos = () => {
-						if (!fixedElement || isKeyboardOpenRef.current) return;
+					if (fixedElementBottom > docHeight) {
+						fixedElementBottom = docHeight;
+					}
 
-						const fixedElementHeight = fixedElement.offsetHeight;
-						const docHeight = getDocHeight();
+					fixedElement.style.top = `${
+						fixedElementBottom - fixedElementHeight
+					}px`;
 
-						let fixedElementBottom =
-							document.documentElement.scrollTop + viewport.height;
+					// Обновляем padding-bottom при изменении размера
+					updateElementPadding();
+				};
 
-						if (fixedElementBottom > docHeight) {
-							fixedElementBottom = docHeight;
-						}
+				adjustFixedPos();
 
-						fixedElement.style.top = `${
-							fixedElementBottom - fixedElementHeight
-						}px`;
+				document.addEventListener('scroll', adjustFixedPos, {
+					passive: true,
+				});
+				viewport.addEventListener('resize', adjustFixedPos, {
+					passive: true,
+				});
+			} else {
+				// Для не-iOS устройств обновляем padding при изменении размера viewport
+				handleViewportResizeForPadding = () => {
+					updateElementPadding();
+				};
 
-						// Обновляем padding-bottom при изменении размера (только если клавиатура закрыта)
-						updateElementPadding();
-					};
-
-					adjustFixedPos();
-
-					document.addEventListener('scroll', adjustFixedPos, {
-						passive: true,
-					});
-					viewport.addEventListener('resize', adjustFixedPos, {
-						passive: true,
-					});
-				} else {
-					// Для не-iOS устройств обновляем padding при изменении размера viewport
-					handleViewportResizeForPadding = () => {
-						updateElementPadding();
-					};
-
-					viewport.addEventListener('resize', handleViewportResizeForPadding, {
-						passive: true,
-					});
-				}
+				viewport.addEventListener('resize', handleViewportResizeForPadding, {
+					passive: true,
+				});
 			}
 		}
 
@@ -143,10 +143,9 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 				isKeyboardOpenRef.current = true;
 				setIsKeyboardOpen(true);
 				setHeight(currentHeight);
-				// Очищаем padding-bottom элемента когда клавиатура открыта
-				if (options?.fixedElementSelector && fixedElementRef.current) {
-					fixedElementRef.current.style.paddingBottom =
-						originalElementPaddingRef.current;
+				// Обновляем padding-bottom когда клавиатура открыта
+				if (options?.fixedElementRef) {
+					updateElementPadding();
 				}
 				return;
 			}
@@ -155,8 +154,8 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 				isKeyboardOpenRef.current = false;
 				setIsKeyboardOpen(false);
 				setHeight(initialHeight);
-				// Восстанавливаем padding-bottom элемента когда клавиатура закрыта
-				if (options?.fixedElementSelector) {
+				// Обновляем padding-bottom когда клавиатура закрыта (становится 0)
+				if (options?.fixedElementRef) {
 					updateElementPadding();
 				}
 			}
@@ -194,7 +193,7 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 					originalElementPaddingRef.current;
 			}
 		};
-	}, [options?.fixedElementSelector]);
+	}, [options?.fixedElementRef]);
 
 	return {
 		height,

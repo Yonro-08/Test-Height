@@ -1,12 +1,14 @@
+import { useRef } from 'react';
 import './App.css';
 import useVisualViewport from './useVisualViewport';
 
 function App() {
-	useVisualViewport({ fixedElementSelector: '.modal' });
+	const modalRef = useRef<HTMLDivElement>(null);
+	useVisualViewport({ fixedElementRef: modalRef });
 
 	return (
 		<div className='container'>
-			<div className='modal'>
+			<div ref={modalRef} className='modal'>
 				<div className={'modal__header'}>
 					<span className={'modal__title'}>Войдите в учетную запись</span>
 					<div className='modal__close'>
