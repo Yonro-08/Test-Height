@@ -20,6 +20,7 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 		bottom: string;
 		top: string;
 	} | null>(null);
+	const isKeyboardOpenRef = useRef<boolean>(false);
 
 	useEffect(() => {
 		if (typeof window === 'undefined') return;
@@ -41,6 +42,17 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 		let adjustFixedPos: (() => void) | null = null;
 		let handleViewportResizeForPadding: (() => void) | null = null;
 
+		// Функция для обновления padding-bottom (не устанавливает если клавиатура открыта)
+		const updateBodyPadding = () => {
+			if (isKeyboardOpenRef.current) return;
+
+			const element = fixedElementRef.current;
+			if (!element) return;
+
+			const fixedElementHeight = element.offsetHeight || 0;
+			document.body.style.paddingBottom = `${fixedElementHeight}px`;
+		};
+
 		// Инициализация работы с фиксированным элементом
 		if (options?.fixedElementSelector) {
 			fixedElement = document.querySelector(
@@ -49,11 +61,6 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 
 			if (fixedElement) {
 				fixedElementRef.current = fixedElement;
-
-				const updateBodyPadding = () => {
-					const fixedElementHeight = fixedElement?.offsetHeight || 0;
-					document.body.style.paddingBottom = `${fixedElementHeight}px`;
-				};
 
 				// Сохраняем оригинальные стили body
 				originalBodyPaddingRef.current =
@@ -99,7 +106,7 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 							fixedElementBottom - fixedElementHeight
 						}px`;
 
-						// Обновляем padding-bottom при изменении размера
+						// Обновляем padding-bottom при изменении размера (только если клавиатура закрыта)
 						updateBodyPadding();
 					};
 
@@ -133,14 +140,24 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 			const diff = initialHeight - currentHeight;
 
 			if (diff > KEYBOARD_THRESHOLD) {
+				isKeyboardOpenRef.current = true;
 				setIsKeyboardOpen(true);
 				setHeight(currentHeight);
+				// Очищаем padding-bottom когда клавиатура открыта
+				if (options?.fixedElementSelector) {
+					document.body.style.paddingBottom = originalBodyPaddingRef.current;
+				}
 				return;
 			}
 
 			if (diff <= KEYBOARD_THRESHOLD) {
+				isKeyboardOpenRef.current = false;
 				setIsKeyboardOpen(false);
 				setHeight(initialHeight);
+				// Восстанавливаем padding-bottom когда клавиатура закрыта
+				if (options?.fixedElementSelector) {
+					updateBodyPadding();
+				}
 			}
 		};
 
