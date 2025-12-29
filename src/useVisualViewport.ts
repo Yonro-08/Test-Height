@@ -14,7 +14,7 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 
 	const initialHeightRef = useRef<number | null>(null);
 	const fixedElementRef = useRef<HTMLElement | null>(null);
-	const originalBodyPaddingRef = useRef<string>('');
+	const originalElementPaddingRef = useRef<string>('');
 	const originalElementStylesRef = useRef<{
 		position: string;
 		bottom: string;
@@ -42,15 +42,15 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 		let adjustFixedPos: (() => void) | null = null;
 		let handleViewportResizeForPadding: (() => void) | null = null;
 
-		// Функция для обновления padding-bottom (не устанавливает если клавиатура открыта)
-		const updateBodyPadding = () => {
+		// Функция для обновления padding-bottom элемента (не устанавливает если клавиатура открыта)
+		const updateElementPadding = () => {
 			if (isKeyboardOpenRef.current) return;
 
 			const element = fixedElementRef.current;
 			if (!element) return;
 
 			const fixedElementHeight = element.offsetHeight || 0;
-			document.body.style.paddingBottom = `${fixedElementHeight}px`;
+			element.style.paddingBottom = `${fixedElementHeight}px`;
 		};
 
 		// Инициализация работы с фиксированным элементом
@@ -62,12 +62,12 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 			if (fixedElement) {
 				fixedElementRef.current = fixedElement;
 
-				// Сохраняем оригинальные стили body
-				originalBodyPaddingRef.current =
-					document.body.style.paddingBottom || '';
+				// Сохраняем оригинальные стили элемента
+				originalElementPaddingRef.current =
+					fixedElement.style.paddingBottom || '';
 
 				// Устанавливаем начальный padding-bottom
-				updateBodyPadding();
+				updateElementPadding();
 
 				// Обработка для iOS
 				const isIOS = /iPhone|iPad|iPod/.test(window.navigator.userAgent);
@@ -107,7 +107,7 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 						}px`;
 
 						// Обновляем padding-bottom при изменении размера (только если клавиатура закрыта)
-						updateBodyPadding();
+						updateElementPadding();
 					};
 
 					adjustFixedPos();
@@ -121,7 +121,7 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 				} else {
 					// Для не-iOS устройств обновляем padding при изменении размера viewport
 					handleViewportResizeForPadding = () => {
-						updateBodyPadding();
+						updateElementPadding();
 					};
 
 					viewport.addEventListener('resize', handleViewportResizeForPadding, {
@@ -143,9 +143,10 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 				isKeyboardOpenRef.current = true;
 				setIsKeyboardOpen(true);
 				setHeight(currentHeight);
-				// Очищаем padding-bottom когда клавиатура открыта
-				if (options?.fixedElementSelector) {
-					document.body.style.paddingBottom = originalBodyPaddingRef.current;
+				// Очищаем padding-bottom элемента когда клавиатура открыта
+				if (options?.fixedElementSelector && fixedElementRef.current) {
+					fixedElementRef.current.style.paddingBottom =
+						originalElementPaddingRef.current;
 				}
 				return;
 			}
@@ -154,9 +155,9 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 				isKeyboardOpenRef.current = false;
 				setIsKeyboardOpen(false);
 				setHeight(initialHeight);
-				// Восстанавливаем padding-bottom когда клавиатура закрыта
+				// Восстанавливаем padding-bottom элемента когда клавиатура закрыта
 				if (options?.fixedElementSelector) {
-					updateBodyPadding();
+					updateElementPadding();
 				}
 			}
 		};
@@ -187,8 +188,11 @@ export default function useVisualViewport(options?: UseVisualViewportOptions) {
 				element.style.top = originalElementStylesRef.current.top;
 			}
 
-			// Восстанавливаем padding-bottom body
-			document.body.style.paddingBottom = originalBodyPaddingRef.current;
+			// Восстанавливаем padding-bottom элемента
+			if (fixedElementRef.current) {
+				fixedElementRef.current.style.paddingBottom =
+					originalElementPaddingRef.current;
+			}
 		};
 	}, [options?.fixedElementSelector]);
 
