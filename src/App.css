@@ -14,3 +14,82 @@
 	height: 100%;
 	overflow: hidden;
 }
+
+.modal {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	background: #fff;
+	border-radius: 24px 24px 0 0;
+
+	.modal__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 24px;
+		padding: 16px;
+
+		.modal__title {
+			font-size: 20px;
+			font-weight: 700;
+			line-height: 24px;
+		}
+
+		.modal__close {
+			border-radius: 20px;
+			padding: 8px;
+			width: 36px;
+			height: 36px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 4px;
+		}
+	}
+}
+
+.login {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	padding: 16px;
+	padding-top: 0;
+
+	.login__inputs {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	.login__footer {
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+
+	.login__actions {
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		gap: 5px;
+
+		button {
+			font-weight: 500;
+		}
+
+		& button:nth-child(1) {
+			color: #808fa4;
+		}
+
+		& button:nth-child(2) {
+			color: #26b568;
+		}
+	}
+
+	.login__button {
+		height: 56px;
+		border-radius: 16px;
+	}
+}

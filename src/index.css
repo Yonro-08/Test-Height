@@ -10,10 +10,11 @@ html {
 
 body {
 	position: relative;
-	color: #fff;
+	color: #141b28;
+	font-weight: 500;
 	width: 100vw;
 	height: 100vh;
-	background: gray;
+	background-color: rgba(20, 27, 40, 0.5);
 	overflow: hidden;
 	touch-action: none;
 }
